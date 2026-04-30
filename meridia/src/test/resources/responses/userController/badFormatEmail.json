@@ -1,0 +1,7 @@
+{
+  "errors" : [ {
+    "message" : "Please provide a valid email address",
+    "field" : "email"
+  } ],
+  "status" : 400
+}

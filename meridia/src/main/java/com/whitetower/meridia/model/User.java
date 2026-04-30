@@ -2,8 +2,7 @@ package com.whitetower.meridia.model;
 
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
@@ -19,8 +18,17 @@ public class User {
     @NotBlank
     private String name;
 
-    @Column(name = "size_available", nullable = false)
+    @Column(nullable = false)
     @NotBlank
+    @Email
+    private String email;
+
+    @Column(nullable = false)
+    @NotBlank
+    private String password;
+
+    @Column(name = "size_available", nullable = false)
+    @NotNull
     @PositiveOrZero
     private Integer sizeAvailable;
 }

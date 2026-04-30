@@ -1,0 +1,7 @@
+{
+  "errors" : [ {
+    "field" : "name",
+    "message" : "Name is required"
+  } ],
+  "status" : 400
+}
