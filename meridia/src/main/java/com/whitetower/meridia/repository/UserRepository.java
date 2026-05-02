@@ -11,4 +11,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u  WHERE (u.sizeAvailable = :size)")
     List<User> findAllUsersWithSizeAvailable(@Param("size") Integer size);
+
+    @Query("SELECT u FROM User u WHERE (u.email = :email)")
+    List<User> findUsersByEmail(@Param("email") String email);
 }

@@ -1,13 +1,10 @@
 package com.whitetower.meridia.dto;
 
 import com.whitetower.meridia.annotation.Password;
+import com.whitetower.meridia.model.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 @Data
 public class UserRegistrationDTO{
@@ -20,4 +17,9 @@ public class UserRegistrationDTO{
 
     @Password()
     private String password;
+
+
+    public User toEntity(){
+        return new User(-1L, name, email, password, 0);
+    }
 }
