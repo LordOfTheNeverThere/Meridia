@@ -1,6 +1,7 @@
 package com.whitetower.meridia;
 
 import com.whitetower.meridia.controller.UserController;
+import com.whitetower.meridia.service.UserService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -8,6 +9,7 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.file.Files;
@@ -22,6 +24,8 @@ public class UserControllerTests {
     @Autowired
     private MockMvc mockMvc;
 
+    @MockitoBean
+    private UserService userService;
 
     @Test
     void happyPath() throws Exception {
@@ -31,6 +35,8 @@ public class UserControllerTests {
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
 
         Assertions.assertTrue(response.contains("id"));
+
+        //TODO: Mock repository response
     }
 
     @Test
