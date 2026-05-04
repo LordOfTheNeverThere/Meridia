@@ -20,6 +20,6 @@ public class UserRegistrationDTO{
 
 
     public User toEntity(){
-        return new User(-1L, name, email, password, 0);
+        return new User(null, name, email, password, 0);
     }
 }

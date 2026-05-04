@@ -26,17 +26,10 @@ public class UserService {
         if (!results.isEmpty()) {
             return new ServiceResponse<>(ServiceResponseType.ENTITY_ALREADY_EXISTS,-1L);
         }
-        try {
-            toStoreEntity.setSizeAvailable(DEFAULT_SIZE);
-            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(13);
-            toStoreEntity.setPassword(encoder.encode(toStoreEntity.getPassword()));
-            User savedUser = db.saveAndFlush(toStoreEntity);
-            return new ServiceResponse<>(ServiceResponseType.OK, savedUser.getId());
-        } catch (DataIntegrityViolationException | ConstraintViolationException e) {
-            return new ServiceResponse<>(ServiceResponseType.ENTITY_IS_INVALID,-1L);
-        } catch (Exception e) {
-            return new ServiceResponse<>(ServiceResponseType.UNKNOWN_DB_ERROR,-1L);
-        }
-
+        toStoreEntity.setSizeAvailable(DEFAULT_SIZE);
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(13);
+        toStoreEntity.setPassword(encoder.encode(toStoreEntity.getPassword()));
+        User savedUser = db.saveAndFlush(toStoreEntity);
+        return new ServiceResponse<>(ServiceResponseType.OK, savedUser.getId());
     }
 }
