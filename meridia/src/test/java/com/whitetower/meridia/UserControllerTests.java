@@ -1,9 +1,12 @@
 package com.whitetower.meridia;
 
 import com.whitetower.meridia.controller.UserController;
+import com.whitetower.meridia.enumeration.ServiceResponseType;
+import com.whitetower.meridia.model.User;
+import com.whitetower.meridia.service.ServiceResponse;
 import com.whitetower.meridia.service.UserService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,15 +31,17 @@ public class UserControllerTests {
     private UserService userService;
 
     @Test
-    void happyPath() throws Exception {
+    void createUser() throws Exception {
+        // Mock Response
+        Mockito.when(userService.createUser(Mockito.isA(User.class))).thenReturn(new ServiceResponse<Long>(ServiceResponseType.OK,1L));
 
-        String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/happyPath.json"));
+        String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
         String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/createUser.json"));
 
-        Assertions.assertTrue(response.contains("id"));
+        JSONAssert.assertEquals(expectedResponse, response, JSONCompareMode.STRICT);
 
-        //TODO: Mock repository response
     }
 
     @Test
