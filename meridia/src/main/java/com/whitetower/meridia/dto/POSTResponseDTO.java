@@ -2,12 +2,11 @@ package com.whitetower.meridia.dto;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NonNull;
+import org.jspecify.annotations.NonNull;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-public class POSTResponseDTO extends ResponseDTO {
 
-    @NonNull
-    private Long id;
+public class POSTResponseDTO extends ResponseDTO<Long> {
+    public POSTResponseDTO(@NonNull Long payload) {
+        super(payload);
+    }
 }

@@ -4,6 +4,7 @@ import com.whitetower.meridia.controller.UserController;
 import com.whitetower.meridia.dto.UserRegistrationDTO;
 import com.whitetower.meridia.model.User;
 import com.whitetower.meridia.repository.UserRepository;
+import com.whitetower.meridia.util.Security;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
@@ -13,6 +14,7 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,6 +36,9 @@ public class UserIntegrationTests {
 
     @Autowired
     private UserRepository db;
+
+    @Autowired
+    private Security security;
 
     @Test
     void createUser() throws Exception {
@@ -80,4 +85,29 @@ public class UserIntegrationTests {
         }
     }
 
+    @Test
+    void signIn() throws Exception {
+        //Create User
+        String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
+        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+
+        // Login
+        String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
+        String header = mockMvc.perform(post(UserController.API_SIGN_IN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+                .andExpect(status().isOk()).andReturn().getResponse().getHeader(HttpHeaders.SET_COOKIE);
+        Assertions.assertTrue(null != header);
+        Assertions.assertTrue(header.contains("jwt-token="));
+        Assertions.assertTrue(header.contains("Path=/"));
+        Assertions.assertTrue(header.contains("Max-Age=1800"));
+        Assertions.assertTrue(header.contains("Expires="));
+        Assertions.assertTrue(header.contains("Secure"));
+        Assertions.assertTrue(header.contains("HttpOnly"));
+        Assertions.assertTrue(header.contains("SameSite=Strict"));
+
+        String[] fieldsInHeader = header.split(";");
+        String token = fieldsInHeader[0].split("=")[1];
+        Assertions.assertEquals(2, token.chars().filter(c -> (char) c == '.').count());
+
+        Assertions.assertTrue(security.validateJwtToken(token));
+    }
 }
