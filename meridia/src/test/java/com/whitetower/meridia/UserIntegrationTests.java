@@ -5,6 +5,8 @@ import com.whitetower.meridia.dto.UserRegistrationDTO;
 import com.whitetower.meridia.model.User;
 import com.whitetower.meridia.repository.UserRepository;
 import com.whitetower.meridia.util.Security;
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
@@ -22,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.mockito.Mockito.mockConstruction;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,6 +42,15 @@ public class UserIntegrationTests {
 
     @Autowired
     private Security security;
+
+    @Autowired
+    private Flyway flyway;
+
+    @AfterEach
+    void cleanDatabase(){
+        flyway.clean();
+        flyway.migrate();
+    }
 
     @Test
     void createUser() throws Exception {
@@ -109,5 +121,57 @@ public class UserIntegrationTests {
         Assertions.assertEquals(2, token.chars().filter(c -> (char) c == '.').count());
 
         Assertions.assertTrue(security.validateJwtToken(token));
+    }
+
+
+    @Test
+    void userLoginTokenWasTampered() throws Exception {
+        //Create User
+        String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
+        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+
+        // Login
+        String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
+        String header = mockMvc.perform(post(UserController.API_SIGN_IN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+                .andExpect(status().isOk()).andReturn().getResponse().getHeader(HttpHeaders.SET_COOKIE);
+        Assertions.assertTrue(null != header);
+        Assertions.assertTrue(header.contains("jwt-token="));
+
+        String[] fieldsInHeader = header.split(";");
+        String token = fieldsInHeader[0].split("=")[1];
+        Assertions.assertEquals(2, token.chars().filter(c -> (char) c == '.').count());
+        token = token.replace(".ey", ".ye");
+        Assertions.assertFalse(security.validateJwtToken(token));
+    }
+
+    @Test
+    void userLoginIncorrectPassword() throws Exception {
+        //Create User
+        String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
+        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+
+        // Login
+        String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLoginIncorrectPassword.json"));
+        String response = mockMvc.perform(post(UserController.API_SIGN_IN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+                .andExpect(status().isNotFound()).andReturn().getResponse().getContentAsString();
+
+        String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/entityNotFound.json"));
+        JSONAssert.assertEquals(expectedResponse, response, JSONCompareMode.STRICT);
+    }
+
+
+    @Test
+    void userLoginIncorrectEmail() throws Exception {
+        //Create User
+        String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
+        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+
+        // Login
+        String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLoginIncorrectEmail.json"));
+        String response = mockMvc.perform(post(UserController.API_SIGN_IN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+                .andExpect(status().isNotFound()).andReturn().getResponse().getContentAsString();
+
+        String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/entityNotFound.json"));
+        JSONAssert.assertEquals(expectedResponse, response, JSONCompareMode.STRICT);
     }
 }

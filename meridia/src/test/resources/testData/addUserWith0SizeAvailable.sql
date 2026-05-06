@@ -1,2 +1,2 @@
-INSERT INTO users (id, name, size_available) VALUES (99, 'zero', 0);
-INSERT INTO users (id, name, size_available) VALUES (100, 'notZero', 100);
+INSERT INTO users (id, name, size_available, email, password) VALUES (99, 'zero', 0, 'some@example.com', 'password');
+INSERT INTO users (id, name, size_available, email, password) VALUES (100, 'notZero', 100, 'some2@example.com', 'password');

@@ -12,7 +12,7 @@ public class UserLoginDTO {
     @Email(message = "Please provide a valid email address")
     private String email;
 
-    @Password()
+    @NotBlank(message = "Password is Required")
     private String password;
 
 

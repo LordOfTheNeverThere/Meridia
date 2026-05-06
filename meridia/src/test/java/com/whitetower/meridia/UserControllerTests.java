@@ -5,6 +5,7 @@ import com.whitetower.meridia.enumeration.ServiceResponseType;
 import com.whitetower.meridia.model.User;
 import com.whitetower.meridia.service.ServiceResponse;
 import com.whitetower.meridia.service.UserService;
+import com.whitetower.meridia.util.Security;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -29,6 +30,9 @@ public class UserControllerTests {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private Security security;
 
     @Test
     void createUser() throws Exception {
