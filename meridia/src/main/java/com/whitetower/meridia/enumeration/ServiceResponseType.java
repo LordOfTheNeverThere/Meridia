@@ -1,6 +1,5 @@
 package com.whitetower.meridia.enumeration;
 
-import lombok.Getter;
 
 public enum ServiceResponseType {
     OK ("There is no business validation error."),
