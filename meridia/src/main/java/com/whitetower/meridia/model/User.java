@@ -1,6 +1,7 @@
 package com.whitetower.meridia.model;
 
 
+import com.whitetower.meridia.dto.UserDTO;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -35,4 +36,8 @@ public class User {
     @NotNull
     @PositiveOrZero
     private Integer sizeAvailable;
+
+    public UserDTO toUserDTO() {
+        return new UserDTO(name, email, sizeAvailable);
+    }
 }

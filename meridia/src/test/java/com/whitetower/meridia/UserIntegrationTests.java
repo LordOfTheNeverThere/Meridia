@@ -1,7 +1,6 @@
 package com.whitetower.meridia;
 import com.whitetower.meridia.controller.UserController;
 
-import com.whitetower.meridia.dto.UserRegistrationDTO;
 import com.whitetower.meridia.model.User;
 import com.whitetower.meridia.repository.UserRepository;
 import com.whitetower.meridia.util.Security;
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
-import org.mockito.Mockito;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +16,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import static org.mockito.Mockito.mockConstruction;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -105,7 +101,7 @@ public class UserIntegrationTests {
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
-        String header = mockMvc.perform(post(UserController.API_SIGN_IN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String header = mockMvc.perform(post(UserController.API_LOGIN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isOk()).andReturn().getResponse().getHeader(HttpHeaders.SET_COOKIE);
         Assertions.assertTrue(null != header);
         Assertions.assertTrue(header.contains("jwt-token="));
@@ -120,7 +116,7 @@ public class UserIntegrationTests {
         String token = fieldsInHeader[0].split("=")[1];
         Assertions.assertEquals(2, token.chars().filter(c -> (char) c == '.').count());
 
-        Assertions.assertTrue(security.validateJwtToken(token));
+        Assertions.assertTrue(security.validateJwt(token));
     }
 
 
@@ -132,7 +128,7 @@ public class UserIntegrationTests {
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
-        String header = mockMvc.perform(post(UserController.API_SIGN_IN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String header = mockMvc.perform(post(UserController.API_LOGIN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isOk()).andReturn().getResponse().getHeader(HttpHeaders.SET_COOKIE);
         Assertions.assertTrue(null != header);
         Assertions.assertTrue(header.contains("jwt-token="));
@@ -141,7 +137,7 @@ public class UserIntegrationTests {
         String token = fieldsInHeader[0].split("=")[1];
         Assertions.assertEquals(2, token.chars().filter(c -> (char) c == '.').count());
         token = token.replace(".ey", ".ye");
-        Assertions.assertFalse(security.validateJwtToken(token));
+        Assertions.assertFalse(security.validateJwt(token));
     }
 
     @Test
@@ -152,7 +148,7 @@ public class UserIntegrationTests {
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLoginIncorrectPassword.json"));
-        String response = mockMvc.perform(post(UserController.API_SIGN_IN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_LOGIN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isNotFound()).andReturn().getResponse().getContentAsString();
 
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/entityNotFound.json"));
@@ -168,7 +164,7 @@ public class UserIntegrationTests {
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLoginIncorrectEmail.json"));
-        String response = mockMvc.perform(post(UserController.API_SIGN_IN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_LOGIN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isNotFound()).andReturn().getResponse().getContentAsString();
 
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/entityNotFound.json"));

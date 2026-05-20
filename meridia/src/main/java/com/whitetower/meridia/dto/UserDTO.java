@@ -2,9 +2,11 @@ package com.whitetower.meridia.dto;
 
 
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class UserDTO {
 
     @NotBlank(message = "Name is required")

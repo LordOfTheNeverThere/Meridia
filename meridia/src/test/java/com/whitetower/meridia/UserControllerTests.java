@@ -1,24 +1,31 @@
 package com.whitetower.meridia;
 
 import com.whitetower.meridia.controller.UserController;
+import com.whitetower.meridia.dto.UserDTO;
 import com.whitetower.meridia.enumeration.ServiceResponseType;
 import com.whitetower.meridia.model.User;
 import com.whitetower.meridia.service.ServiceResponse;
 import com.whitetower.meridia.service.UserService;
 import com.whitetower.meridia.util.Security;
+import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static com.whitetower.meridia.controller.UserController.wwwAuthenticateHeader;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,7 +44,9 @@ public class UserControllerTests {
     @Test
     void createUser() throws Exception {
         // Mock Response
-        Mockito.when(userService.createUser(Mockito.isA(User.class))).thenReturn(new ServiceResponse<Long>(ServiceResponseType.OK,1L));
+
+        Mockito.when(userService.createUser(Mockito.isA(User.class)))
+                .thenReturn(new ServiceResponse<>(ServiceResponseType.OK, new UserDTO("miguel_dev", "miguel@example.com", 20)));
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
         String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
@@ -129,6 +138,37 @@ public class UserControllerTests {
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/badFormatPassword.json"));
 
         JSONAssert.assertEquals(expectedResponse, response, JSONCompareMode.STRICT);
+    }
+
+    @Test
+    void incorrectJWETokenPassed() throws Exception {
+
+
+        MvcResult mvcResult = mockMvc.perform(delete(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andReturn();
+
+        Assertions.assertEquals("Required cookie 'jwt-token' is not present.", mvcResult.getResponse().getErrorMessage());
+        Assertions.assertEquals("", mvcResult.getResponse().getContentAsString());
+
+        mvcResult = mockMvc.perform(delete(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("incorrect-token-name", "")))
+                .andExpect(status().isBadRequest()).andReturn();
+
+        Assertions.assertEquals("Required cookie 'jwt-token' is not present.", mvcResult.getResponse().getErrorMessage());
+        Assertions.assertEquals("", mvcResult.getResponse().getContentAsString());
+
+        mvcResult = mockMvc.perform(delete(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("jwt-token", "")))
+                .andExpect(status().isUnauthorized()).andReturn();
+
+        Assertions.assertEquals(wwwAuthenticateHeader().get(HttpHeaders.WWW_AUTHENTICATE), mvcResult.getResponse().getHeaders(HttpHeaders.WWW_AUTHENTICATE));
+        Assertions.assertEquals("", mvcResult.getResponse().getContentAsString());
+
+        mvcResult = mockMvc.perform(delete(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("jwt-token", "I am a hacker please arrest me")))
+                .andExpect(status().isForbidden()).andReturn();
+        
+        Assertions.assertEquals(wwwAuthenticateHeader().get(HttpHeaders.WWW_AUTHENTICATE), mvcResult.getResponse().getHeaders(HttpHeaders.WWW_AUTHENTICATE));
+        Assertions.assertEquals("", mvcResult.getResponse().getContentAsString());
+
+
     }
 
 }
