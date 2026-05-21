@@ -49,7 +49,7 @@ public class UserControllerTests {
                 .thenReturn(new ServiceResponse<>(ServiceResponseType.OK, new UserDTO("miguel_dev", "miguel@example.com", 20)));
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/createUser.json"));
 
@@ -61,7 +61,7 @@ public class UserControllerTests {
     void missingName() throws Exception {
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/missingName.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
 
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/missingName.json"));
@@ -73,7 +73,7 @@ public class UserControllerTests {
     void badFormatEmail1() throws Exception {
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/badFormatEmail1.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/badFormatEmail.json"));
 
@@ -84,7 +84,7 @@ public class UserControllerTests {
     void badFormatEmail2() throws Exception {
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/badFormatEmail1.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/badFormatEmail.json"));
 
@@ -96,7 +96,7 @@ public class UserControllerTests {
     void missingPassword() throws Exception {
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/missingPassword.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
 
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/badFormatPassword.json"));
@@ -108,7 +108,7 @@ public class UserControllerTests {
     void badFormatPassword1() throws Exception {
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/badFormatPassword1.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
 
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/badFormatPassword.json"));
@@ -121,7 +121,7 @@ public class UserControllerTests {
     void badFormatPassword2() throws Exception {
 
         String requestJson =Files.readString(Path.of("src/test/resources/requests/userController/badFormatPassword2.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
 
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/badFormatPassword.json"));
@@ -133,7 +133,7 @@ public class UserControllerTests {
     void badFormatPassword3() throws Exception {
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/badFormatPassword3.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/badFormatPassword.json"));
 
@@ -144,25 +144,25 @@ public class UserControllerTests {
     void incorrectJWETokenPassed() throws Exception {
 
 
-        MvcResult mvcResult = mockMvc.perform(delete(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON))
+        MvcResult mvcResult = mockMvc.perform(delete(UserController.API_USER).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest()).andReturn();
 
         Assertions.assertEquals("Required cookie 'jwt-token' is not present.", mvcResult.getResponse().getErrorMessage());
         Assertions.assertEquals("", mvcResult.getResponse().getContentAsString());
 
-        mvcResult = mockMvc.perform(delete(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("incorrect-token-name", "")))
+        mvcResult = mockMvc.perform(delete(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("incorrect-token-name", "")))
                 .andExpect(status().isBadRequest()).andReturn();
 
         Assertions.assertEquals("Required cookie 'jwt-token' is not present.", mvcResult.getResponse().getErrorMessage());
         Assertions.assertEquals("", mvcResult.getResponse().getContentAsString());
 
-        mvcResult = mockMvc.perform(delete(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("jwt-token", "")))
+        mvcResult = mockMvc.perform(delete(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("jwt-token", "")))
                 .andExpect(status().isUnauthorized()).andReturn();
 
         Assertions.assertEquals(wwwAuthenticateHeader().get(HttpHeaders.WWW_AUTHENTICATE), mvcResult.getResponse().getHeaders(HttpHeaders.WWW_AUTHENTICATE));
         Assertions.assertEquals("", mvcResult.getResponse().getContentAsString());
 
-        mvcResult = mockMvc.perform(delete(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("jwt-token", "I am a hacker please arrest me")))
+        mvcResult = mockMvc.perform(delete(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("jwt-token", "I am a hacker please arrest me")))
                 .andExpect(status().isForbidden()).andReturn();
         
         Assertions.assertEquals(wwwAuthenticateHeader().get(HttpHeaders.WWW_AUTHENTICATE), mvcResult.getResponse().getHeaders(HttpHeaders.WWW_AUTHENTICATE));

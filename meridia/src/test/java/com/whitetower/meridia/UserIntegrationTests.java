@@ -4,6 +4,7 @@ import com.whitetower.meridia.controller.UserController;
 import com.whitetower.meridia.model.User;
 import com.whitetower.meridia.repository.UserRepository;
 import com.whitetower.meridia.util.Security;
+import jakarta.servlet.http.Cookie;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -17,13 +18,14 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import static org.mockito.Mockito.mockConstruction;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,7 +55,7 @@ public class UserIntegrationTests {
     void createUser() throws Exception {
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/createUser.json"));
 
@@ -67,13 +69,13 @@ public class UserIntegrationTests {
     void creationOfDuplicateUser() throws Exception {
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-        String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/createUser.json"));
 
         JSONAssert.assertEquals(expectedResponse, response, JSONCompareMode.STRICT);
 
-        response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+        response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
             .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
 
         expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/entityAlreadyExists.json"));
@@ -86,7 +88,7 @@ public class UserIntegrationTests {
         try (MockedConstruction<User> mocked = mockConstruction(User.class, (mock, context) -> {
         })) {
             String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-            String response = mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+            String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
                     .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
             String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/invalidEntity.json"));
 
@@ -98,7 +100,7 @@ public class UserIntegrationTests {
     void signIn() throws Exception {
         //Create User
         String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+        mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
@@ -115,9 +117,9 @@ public class UserIntegrationTests {
 
         String[] fieldsInHeader = header.split(";");
         String token = fieldsInHeader[0].split("=")[1];
-        Assertions.assertEquals(2, token.chars().filter(c -> (char) c == '.').count());
+        Assertions.assertEquals(4, token.chars().filter(c -> (char) c == '.').count());
 
-        Assertions.assertTrue(security.validateJwt(token));
+        Assertions.assertTrue(security.validateJwe(token));
     }
 
 
@@ -125,7 +127,7 @@ public class UserIntegrationTests {
     void userLoginTokenWasTampered() throws Exception {
         //Create User
         String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+        mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
@@ -136,21 +138,21 @@ public class UserIntegrationTests {
 
         String[] fieldsInHeader = header.split(";");
         String token = fieldsInHeader[0].split("=")[1];
-        Assertions.assertEquals(2, token.chars().filter(c -> (char) c == '.').count());
-        token = token.replace(".ey", ".ye");
-        Assertions.assertFalse(security.validateJwt(token));
+        Assertions.assertEquals(4, token.chars().filter(c -> (char) c == '.').count());
+        token = token.substring(0, 146) + "H!" + token.substring(148);
+        Assertions.assertFalse(security.validateJwe(token));
     }
 
     @Test
     void userLoginIncorrectPassword() throws Exception {
         //Create User
         String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+        mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLoginIncorrectPassword.json"));
         String response = mockMvc.perform(post(UserController.API_LOGIN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
-                .andExpect(status().isNotFound()).andReturn().getResponse().getContentAsString();
+                .andExpect(status().isUnauthorized()).andReturn().getResponse().getContentAsString();
 
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/entityNotFound.json"));
         JSONAssert.assertEquals(expectedResponse, response, JSONCompareMode.STRICT);
@@ -161,22 +163,22 @@ public class UserIntegrationTests {
     void userLoginIncorrectEmail() throws Exception {
         //Create User
         String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+        mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLoginIncorrectEmail.json"));
         String response = mockMvc.perform(post(UserController.API_LOGIN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
-                .andExpect(status().isNotFound()).andReturn().getResponse().getContentAsString();
+                .andExpect(status().isUnauthorized()).andReturn().getResponse().getContentAsString();
 
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/entityNotFound.json"));
         JSONAssert.assertEquals(expectedResponse, response, JSONCompareMode.STRICT);
     }
 
     @Test
-    void corruptedJWE() throws Exception {
+    void corruptedJWEDelete() throws Exception {
         //Create User
         String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+        mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
@@ -187,14 +189,20 @@ public class UserIntegrationTests {
 
         String[] fieldsInHeader = header.split(";");
         String token = fieldsInHeader[0].split("=")[1];
-        Assertions.assertTrue(security.validateJwe(token));
+        token = token.substring(0, 146) + "H!" + token.substring(148);
+        Assertions.assertFalse(security.validateJwe(token));
+
+        MvcResult result = mockMvc.perform(delete(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("jwt-token", token)))
+                .andExpect(status().isForbidden()).andReturn();
+        Assertions.assertEquals("Bearer realm=\"Meridia\"", result.getResponse().getHeader(HttpHeaders.WWW_AUTHENTICATE));
+        Assertions.assertEquals("", result.getResponse().getContentAsString());
     }
 
     @Test
     void deleteUser() throws Exception{
         //Create User
         String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
-        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+        mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
 
         // Login
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
@@ -206,5 +214,16 @@ public class UserIntegrationTests {
         String[] fieldsInHeader = header.split(";");
         String token = fieldsInHeader[0].split("=")[1];
         Assertions.assertTrue(security.validateJwe(token));
+
+        MvcResult result = mockMvc.perform(delete(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).cookie(new Cookie("jwt-token", token)))
+                .andExpect(status().isOk()).andReturn();
+
+        Assertions.assertNotEquals("Bearer realm=\"Meridia\"", result.getResponse().getHeader(HttpHeaders.WWW_AUTHENTICATE));
+        String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/deleteUserSuccess.json"));
+        JSONAssert.assertEquals(expectedResponse, result.getResponse().getContentAsString(), JSONCompareMode.STRICT);
+
+        // Can't login since there is no entity stored in the database
+        mockMvc.perform(post(UserController.API_LOGIN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+                .andExpect(status().isUnauthorized());
     }
 }

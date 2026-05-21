@@ -1,4 +1,4 @@
 {
-  "payload" : -1,
+  "payload" :null,
   "errors" : [ "The entity already exists." ]
 }

@@ -1,4 +1,4 @@
 {
-  "payload" : 1,
+  "payload":{"name":"miguel_dev","email":"miguel@example.com","sizeAvailable":15},
   "errors" : null
 }

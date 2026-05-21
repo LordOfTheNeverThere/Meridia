@@ -25,7 +25,7 @@ import java.util.Optional;
 public class UserController {
 
     final static public String API_URI_PREFIX = "/api/v1";
-    final static public String API_USER_POST = API_URI_PREFIX + "/user";
+    final static public String API_USER = API_URI_PREFIX + "/user";
     final static public String API_LOGIN = API_URI_PREFIX + "/login";
 
     @Autowired
@@ -41,7 +41,7 @@ public class UserController {
     }
 
 
-    @PostMapping(API_USER_POST)
+    @PostMapping(API_USER)
     public ResponseEntity<ResponseDTO<UserDTO>> newUser(@Valid @RequestBody UserRegistrationDTO dto){
 
         ServiceResponse<UserDTO> serviceResponse;
@@ -90,7 +90,7 @@ public class UserController {
         }
     }
 
-    @DeleteMapping(API_USER_POST)
+    @DeleteMapping(API_USER)
     public ResponseEntity<UserDTO> delete(@CookieValue("jwt-token") String jwt){
 
         if ( jwt == null || jwt.isEmpty()) return new ResponseEntity<>((UserDTO) null, wwwAuthenticateHeader(), HttpStatus.UNAUTHORIZED);
