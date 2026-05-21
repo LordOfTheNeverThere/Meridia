@@ -46,7 +46,7 @@ public class UserControllerTests {
         // Mock Response
 
         Mockito.when(userService.createUser(Mockito.isA(User.class)))
-                .thenReturn(new ServiceResponse<>(ServiceResponseType.OK, new UserDTO("miguel_dev", "miguel@example.com", 20)));
+                .thenReturn(new ServiceResponse<>(ServiceResponseType.OK, new UserDTO("miguel_dev", "miguel@example.com", 15)));
 
         String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
         String response = mockMvc.perform(post(UserController.API_USER).contentType(MediaType.APPLICATION_JSON).content(requestJson))
