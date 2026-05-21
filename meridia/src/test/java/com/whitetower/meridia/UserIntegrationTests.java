@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -169,5 +170,41 @@ public class UserIntegrationTests {
 
         String expectedResponse = Files.readString(Path.of("src/test/resources/responses/userController/entityNotFound.json"));
         JSONAssert.assertEquals(expectedResponse, response, JSONCompareMode.STRICT);
+    }
+
+    @Test
+    void corruptedJWE() throws Exception {
+        //Create User
+        String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
+        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+
+        // Login
+        String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
+        String header = mockMvc.perform(post(UserController.API_LOGIN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+                .andExpect(status().isOk()).andReturn().getResponse().getHeader(HttpHeaders.SET_COOKIE);
+        Assertions.assertTrue(null != header);
+        Assertions.assertTrue(header.contains("jwt-token="));
+
+        String[] fieldsInHeader = header.split(";");
+        String token = fieldsInHeader[0].split("=")[1];
+        Assertions.assertTrue(security.validateJwe(token));
+    }
+
+    @Test
+    void deleteUser() throws Exception{
+        //Create User
+        String createRequest = Files.readString(Path.of("src/test/resources/requests/userController/createUser.json"));
+        mockMvc.perform(post(UserController.API_USER_POST).contentType(MediaType.APPLICATION_JSON).content(createRequest)).andExpect(status().isCreated());
+
+        // Login
+        String requestJson = Files.readString(Path.of("src/test/resources/requests/userController/userLogin.json"));
+        String header = mockMvc.perform(post(UserController.API_LOGIN).contentType(MediaType.APPLICATION_JSON).content(requestJson))
+                .andExpect(status().isOk()).andReturn().getResponse().getHeader(HttpHeaders.SET_COOKIE);
+        Assertions.assertTrue(null != header);
+        Assertions.assertTrue(header.contains("jwt-token="));
+
+        String[] fieldsInHeader = header.split(";");
+        String token = fieldsInHeader[0].split("=")[1];
+        Assertions.assertTrue(security.validateJwe(token));
     }
 }
